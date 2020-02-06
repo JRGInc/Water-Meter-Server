@@ -1,0 +1,11 @@
+[Unit]
+Description=Janus Research Group Skylark Data Software
+After=syslog.service network.service ssh.service
+
+[Service]
+Environment="PYTHONPATH=/usr/local/lib/python3.6/dist-packages"
+Type=idle
+ExecStart=/usr/bin/python3 /opt/Janus/DATA/python3/janusdata.py
+
+[Install]
+WantedBy=multi-user.target
