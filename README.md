@@ -1,6 +1,6 @@
 # Water Meter Server
 
-This pytho code library receives data from field devices and disperses to appropriate directory on skylark.corp.janusresearch.com.
+This python code library receives data from field devices and disperses to appropriate directory on skylark.corp.janusresearch.com.
 
 ## Testing
 
