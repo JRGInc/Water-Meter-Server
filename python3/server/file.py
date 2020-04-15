@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime
+from config.core import CoreCfg
 from flask import json as flask_json
 
 __author__ = 'Larry A. Hartman'
@@ -61,25 +61,48 @@ class PostFile(
     @staticmethod
     def post_binary(
         post_data
-    ):
+    ) -> (bool, str, str, str):
         """
         POST handler
 
         :param post_data: request object
         """
+        post_err = False
+
+        # Load configuration settings
+        core_cfg = CoreCfg()
+        core_path_dict = core_cfg.get(attrib='core_path_dict')
+
         user_agent = post_data.headers['User-Agent'].split('_')[0]
-        file_name = post_data.headers['User-Agent']
-        print(file_name)
-        file_path = '/opt/Janus/datafiles/' + user_agent + '/binary/'
-        print(file_path)
-        result = 'Binary datafile uploaded!'
+        img_orig_name = 'orig_' + post_data.headers['User-Agent'][13::]
+        img_path = os.path.join(
+            core_path_dict['imgs'],
+            user_agent + '/'
+        )
+        img_orig_url = os.path.join(
+            img_path,
+            img_orig_name
+        )
 
-        f = open(file_path + file_name, 'w+b')
-        f.write(post_data.data)
-        f.close()
+        try:
+            f = open(img_orig_url, 'w+b')
+            f.write(post_data.data)
+            f.close()
 
-        logger.info(result)
-        return result
+            log = 'Binary datafile {0} successfully uploaded!'.\
+                format(img_orig_url)
+            logger.info(log)
+            print(log)
+
+        except Exception as exc:
+            post_err = True
+            log = 'OpenCV failed to open downloaded image.'
+            logger.error(msg=log)
+            logger.error(msg=exc)
+            print(log)
+            print(exc)
+
+        return post_err, img_path, img_orig_name, img_orig_url, log
 
     @staticmethod
     def upload_config(

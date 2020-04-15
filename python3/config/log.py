@@ -1,15 +1,22 @@
-import logging
+__author__ = 'Larry A. Hartman'
+__company__ = 'Janus Research'
+
 import os
 
 # Log paths and files
-LOGPATH = os.path.normpath(os.getenv('JANUSDAT_CORE_LOG_PATH',
-                                     '/var/log/JanusDATA/'))  # Log path
-janusdata = os.path.join(LOGPATH, 'janusdata')  # Log file
-server = os.path.join(LOGPATH, 'server')  # Log file
+LOGPATH = os.path.normpath('/var/log/JanusDATA/')
+januswm = os.path.join(LOGPATH, 'januswm')          # Log file
+janusdata = os.path.join(LOGPATH, 'janusdata')      # Log file
+server = os.path.join(LOGPATH, 'server')            # Log file
 
 
-class Logging(object):
-    def __init__(self):
+class LogCfg(object):
+    def __init__(
+        self
+    ) -> None:
+        """
+        Instantiates logging object and sets log configuration
+        """
         self.config = {
             'version': 1,
             'disable_existing_loggers': False,
@@ -23,6 +30,11 @@ class Logging(object):
                 },
             },
             'loggers': {
+                'januswm': {
+                    'handlers': ['januswm'],
+                    'propagate': False,
+                    'level': 'INFO',
+                },
                 'janusdata': {
                     'handlers': ['janusdata'],
                     'propagate': False,
@@ -32,16 +44,24 @@ class Logging(object):
                     'handlers': ['server'],
                     'propagate': True,
                     'level': 'INFO',
-                },
+                }
             },
             'handlers': {
+                'januswm': {
+                    'level': 'DEBUG',
+                    'formatter': 'verbose',
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'filename': januswm,
+                    'maxBytes': 4096000,
+                    'backupCount': 100,
+                },
                 'janusdata': {
                     'level': 'DEBUG',
                     'formatter': 'verbose',
                     'class': 'logging.handlers.RotatingFileHandler',
                     'filename': janusdata,
                     'maxBytes': 8192000,
-                    'backupCount': 40,
+                    'backupCount': 100,
                 },
                 'server': {
                     'level': 'DEBUG',
@@ -49,12 +69,7 @@ class Logging(object):
                     'class': 'logging.handlers.RotatingFileHandler',
                     'filename': server,
                     'maxBytes': 8192000,
-                    'backupCount': 40,
-                },
-                'console': {
-                    'level': 'DEBUG',
-                    'formatter': 'simple',
-                    'class': 'logging.StreamHandler',
-                },
+                    'backupCount': 100,
+                }
             }
         }
