@@ -45,18 +45,40 @@ class PostFile(
 
         :param post_data: request object
         """
+        core_cfg = CoreCfg()
+        core_path_dict = core_cfg.get(attrib='core_path_dict')
+        data_dirs_dict = core_cfg.get(attrib='data_dirs_dict')
+
         user_agent = post_data.headers['User-Agent'].split('_')[0]
         file_name = post_data.headers['User-Agent']
-        print(file_name)
-        file_path = '/opt/Janus/datafiles/' + user_agent + '/text/'
-        result = 'Text datafile uploaded!'
+        data_path = os.path.join(
+            core_path_dict['data'],
+            user_agent + '/',
+            data_dirs_dict['errs']
+        )
+        file_url = os.path.join(
+            data_path,
+            file_name
+        )
 
-        f = open(file_path + file_name, 'w+b')
-        f.write(post_data.data)
-        f.close()
+        try:
+            f = open(file_url, 'w+b')
+            f.write(post_data.data)
+            f.close()
 
-        logger.info(result)
-        return result
+            log = 'Text datafile {0} successfully uploaded!'. \
+                format(file_url)
+            logger.info(log)
+            print(log)
+
+        except Exception as exc:
+            log = 'Failed to download text datafile.'
+            logger.error(msg=log)
+            logger.error(msg=exc)
+            print(log)
+            print(exc)
+
+        return log
 
     @staticmethod
     def post_binary(
@@ -72,15 +94,17 @@ class PostFile(
         # Load configuration settings
         core_cfg = CoreCfg()
         core_path_dict = core_cfg.get(attrib='core_path_dict')
+        data_dirs_dict = core_cfg.get(attrib='data_dirs_dict')
 
         user_agent = post_data.headers['User-Agent'].split('_')[0]
         img_orig_name = 'orig_' + post_data.headers['User-Agent'][13::]
-        img_path = os.path.join(
-            core_path_dict['imgs'],
-            user_agent + '/'
+        data_path = os.path.join(
+            core_path_dict['data'],
+            user_agent + '/',
+            data_dirs_dict['orig']
         )
         img_orig_url = os.path.join(
-            img_path,
+            data_path,
             img_orig_name
         )
 
@@ -96,13 +120,13 @@ class PostFile(
 
         except Exception as exc:
             post_err = True
-            log = 'OpenCV failed to open downloaded image.'
+            log = 'Failed to download binary datafile.'
             logger.error(msg=log)
             logger.error(msg=exc)
             print(log)
             print(exc)
 
-        return post_err, img_path, img_orig_name, img_orig_url, log
+        return post_err, data_path, img_orig_name, img_orig_url, log
 
     @staticmethod
     def upload_config(

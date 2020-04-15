@@ -14,7 +14,7 @@ def process_image(
         yolo_classes,
         incept_model,
         img_orig,
-        img_path,
+        data_path,
         img_orig_name
 ):
 
@@ -25,8 +25,6 @@ def process_image(
     # Error values dictionary
     err_dict = {
         'shape': True,
-        'build_yolo': True,
-        'build_incept': True,
         'detection': True,
         'img_bbox': True,
         'img_angle': True,
@@ -39,45 +37,45 @@ def process_image(
 
     # Load configuration settings
     core_cfg = CoreCfg()
-    img_dirs_dict = core_cfg.get(attrib='img_dirs_dict')
+    data_dirs_dict = core_cfg.get(attrib='data_dirs_dict')
 
     # Proceed only if model setup successful
     if not err_dict['build_yolo'] and not err_dict['build_incept']:
 
         # Build image urls from image name
         img_bbox_url = os.path.join(
-            img_path,
-            img_dirs_dict['bbox'],
+            data_path,
+            data_dirs_dict['bbox'],
             'bbox_' + img_orig_name[6::]
         )
         img_grotd_url = os.path.join(
-            img_path,
-            img_dirs_dict['grotd'],
+            data_path,
+            data_dirs_dict['grotd'],
             'grotd_' + img_orig_name[6::]
         )
         img_frotd_url = os.path.join(
-            img_path,
-            img_dirs_dict['frotd'],
+            data_path,
+            data_dirs_dict['frotd'],
             'frotd_' + img_orig_name[6::]
         )
         img_rect_url = os.path.join(
-            img_path,
-            img_dirs_dict['rect'],
+            data_path,
+            data_dirs_dict['rect'],
             'rect_' + img_orig_name[6::]
         )
         img_digw_url = os.path.join(
-            img_path,
-            img_dirs_dict['digw'],
+            data_path,
+            data_dirs_dict['digw'],
             'digw_' + img_orig_name[6::]
         )
         img_inv_url = os.path.join(
-            img_path,
-            img_dirs_dict['inv'],
+            data_path,
+            data_dirs_dict['inv'],
             'inv_' + img_orig_name[6::]
         )
         img_olay_url = os.path.join(
-            img_path,
-            img_dirs_dict['olay'],
+            data_path,
+            data_dirs_dict['olay'],
             'olay_' + img_orig_name[6::]
         )
 
@@ -149,8 +147,8 @@ def process_image(
                 img_digw=img_digw,
                 img_save=img_save,
                 img_inv_url=img_inv_url,
-                img_path=img_path,
-                img_dirs_dict=img_dirs_dict
+                img_path=data_path,
+                img_dirs_dict=data_dirs_dict
             )
             print('Crop digits error: {0}'.format(err_dict['img_digs']))
 

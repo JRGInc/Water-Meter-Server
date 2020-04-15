@@ -31,7 +31,7 @@ class CoreCfg(object):
         # Define core paths
         core_dirs_dict = {
             'cfg': 'config/',
-            'imgs': 'images/',
+            'data': 'data/',
             'py3': 'python3/',
             'wgts': 'weights/'
         }
@@ -42,9 +42,9 @@ class CoreCfg(object):
                 self.program_dir,
                 core_dirs_dict['cfg']
             ),
-            'imgs': os.path.join(
+            'data': os.path.join(
                 self.program_dir,
-                core_dirs_dict['imgs']
+                core_dirs_dict['data']
             ),
             'py3': os.path.join(
                 self.program_dir,
@@ -57,7 +57,8 @@ class CoreCfg(object):
         }
 
         # Define core paths
-        self.img_dirs_dict = {
+        self.data_dirs_dict = {
+            'errs': '00--errors/',
             'orig': '01--original/',
             'bbox': '02--bboxes/',
             'grotd': '03--grotated/',

@@ -77,7 +77,7 @@ class HandlerApp(
                 return result
 
             elif request.headers['Content-Type'] == 'application/octet-stream':
-                post_err, img_path, img_orig_name, img_orig_url, result = \
+                post_err, data_path, img_orig_name, img_orig_url, result = \
                     self.post_file.post_binary(request)
 
                 # Need to ensure that no errors were thrown and that the image
@@ -91,7 +91,7 @@ class HandlerApp(
                         yolo_classes=self.yolo_classes,
                         incept_model=self.incept_model,
                         img_orig=img_orig,
-                        img_path=img_path,
+                        data_path=data_path,
                         img_orig_name=img_orig_name
                     )
                 print(result)
