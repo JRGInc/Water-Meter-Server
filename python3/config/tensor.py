@@ -2,11 +2,7 @@ __author__ = 'Larry A. Hartman'
 __company__ = 'Janus Research'
 
 import configparser
-import logging
 import os
-
-logfile = 'januswm'
-logger = logging.getLogger(logfile)
 
 
 class TensorCfg(object):
@@ -64,10 +60,6 @@ class TensorCfg(object):
 
         # Global Inception object detection settings
         self.incept_dict = {
-            'mdl': os.path.join(
-                core_path_dict['mdls'],
-                'inception_v4/pb/'
-            ),
             'wgts': os.path.join(
                 core_path_dict['wgts'],
                 'inception_v4/final/final.ckpt'
@@ -120,17 +112,9 @@ class TensorCfg(object):
                 core_path_dict['cfg'],
                 'yolo_v3_anchors.txt'
             ),
-            'mdl': os.path.join(
-                core_path_dict['mdls'],
-                'yolo_v3/'
-            ),
             'wgts': os.path.join(
                 core_path_dict['wgts'],
                 'yolo_v3/yolo_v3'
-            ),
-            'rslts': os.path.join(
-                core_path_dict['rslts'],
-                'test/'
             ),
             'strides': [8, 16, 32],
             'anchor_per_scale': self.config.getint(
@@ -163,6 +147,8 @@ class TensorCfg(object):
             )
         }
 
+        self.pred_freq = 60
+
     def get(
         self,
         attrib: str
@@ -180,6 +166,8 @@ class TensorCfg(object):
             return self.incept_dict
         elif attrib == 'yolo_dict':
             return self.yolo_dict
+        elif attrib == 'pred_freq':
+            return self.pred_freq
 
     def set(
         self,

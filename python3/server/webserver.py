@@ -1,14 +1,12 @@
-import logging
+import logging.config
 import multiprocessing
+from config.log import LogCfg
 from gevent.pywsgi import WSGIServer
 from flask import Flask
 from server.application import HandlerApp
 
 __author__ = 'Larry A. Hartman'
 __company__ = 'Janus Research'
-
-logfile = 'server'
-logger = logging.getLogger(logfile)
 
 
 class FlaskServer(
@@ -29,6 +27,13 @@ class FlaskServer(
         self.flask_app.debug = True
         self.handler_app = HandlerApp(self.flask_app)
         self.handler_app.handler()
+
+        # Configure logging
+        log_config_obj = LogCfg()
+        logging.config.dictConfig(log_config_obj.config)
+
+        logfile = 'janusserver'
+        self.logger = logging.getLogger(logfile)
 
     def application(
         self
@@ -57,8 +62,8 @@ class FlaskServer(
             )
             self.mp_app.start()
             log = 'Webserver application started.'
-            logger.info(log)
+            self.logger.info(log)
 
         except multiprocessing.ProcessError:
             log = 'Can not start main webserver due to multiprocessing error.'
-            logger.exception(log)
+            self.logger.exception(log)

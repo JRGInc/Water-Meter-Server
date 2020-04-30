@@ -1,17 +1,11 @@
-import cv2
-import logging
-import os
-from config.core import CoreCfg
+import logging.config
+from common import db_ops
+from config.log import LogCfg
 from flask import request
-from machine import prediction
-from machine.tensor import Tensor
 from server.file import PostFile
 
 __author__ = 'Larry A. Hartman'
 __company__ = 'Janus Research'
-
-logfile = 'server'
-logger = logging.getLogger(logfile)
 
 
 class HandlerApp(
@@ -21,36 +15,15 @@ class HandlerApp(
         self,
         flask_app
     ):
-        core_cfg = CoreCfg()
-
         self.flask_app = flask_app
         self.post_file = PostFile()
 
-        # Setup TensorFlow object
-        self.tensor = Tensor(core_cfg=core_cfg)
+        # Configure logging
+        log_config_obj = LogCfg()
+        logging.config.dictConfig(log_config_obj.config)
 
-        # Build YOLO v3 model and retrieve classes
-        self.err_yolo, self.yolo_model, self.yolo_classes = \
-            self.tensor.build_yolo_model()
-        if self.err_yolo:
-            log = 'Unable to build YOLO v3 model'
-            logger.error(log)
-            print(log)
-        else:
-            log = 'YOLO v3 model successfully built.'
-            logger.info(log)
-            print(log)
-
-        # Build Inception v4 model
-        self.err_incept, self.incept_model = self.tensor.build_incept_model()
-        if self.err_incept:
-            log = 'Unable to build Inception v4 model'
-            logger.error(log)
-            print(log)
-        else:
-            log = 'Inception v4 model successfully built.'
-            logger.info(log)
-            print(log)
+        logfile = 'janusserver'
+        self.logger = logging.getLogger(logfile)
 
     def handler(
         self
@@ -59,15 +32,20 @@ class HandlerApp(
         @self.flask_app.route('/upload', methods=['POST'])
         def api_message():
             log = "Incoming transmission!"
-            logger.info(log)
-            logger.info(request.headers)
+            self.logger.info(log)
+            self.logger.info(request.headers['Content-Type'])
+            self.logger.info(request.headers['User-Agent'])
+            self.logger.info(request.headers['Content-Length'])
             print(log)
             print(request.headers)
             # print(request.data)
             print("\n\n")
 
+            user_agent = request.headers['User-Agent'].split('_')[0]
+            db_ops.store_status([user_agent])
+
             if request.headers['Content-Type'] == 'application/json':
-                logger.info(request.data)
+                self.logger.info(request.data)
                 result = self.post_file.post_json(request)
                 return result
 
@@ -77,24 +55,7 @@ class HandlerApp(
                 return result
 
             elif request.headers['Content-Type'] == 'application/octet-stream':
-                post_err, data_path, img_orig_name, img_orig_url, result = \
-                    self.post_file.post_binary(request)
-
-                # Need to ensure that no errors were thrown and that the image
-                # file is valid prior to processing image,
-                if not self.err_yolo and not self.err_incept and not post_err \
-                        and os.path.isfile(path=img_orig_url):
-                    img_orig = cv2.imread(filename=img_orig_url)
-                    prediction.process_image(
-                        tensor_obj=self.tensor,
-                        yolo_model=self.yolo_model,
-                        yolo_classes=self.yolo_classes,
-                        incept_model=self.incept_model,
-                        img_orig=img_orig,
-                        data_path=data_path,
-                        img_orig_name=img_orig_name
-                    )
-                print(result)
+                result = self.post_file.post_binary(request)
                 return result
 
             else:

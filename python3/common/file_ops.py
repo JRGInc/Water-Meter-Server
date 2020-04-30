@@ -3,11 +3,12 @@ __company__ = 'Janus Research'
 
 import csv
 import logging
+import os
 from os import close, remove
-from shutil import move
+from shutil import move, copyfile
 from tempfile import mkstemp
 
-logfile = 'januswm'
+logfile = 'janusdata'
 logger = logging.getLogger(logfile)
 
 
@@ -206,3 +207,47 @@ def f_request(
         logger.exception(msg=log_oserror)
 
     return data_file_out
+
+
+def copy_file(
+    data_orig_url: str,
+    data_dest_url: str
+) -> bool:
+    """
+    Crops and saves given image
+
+    :param data_orig_url: str
+    :param data_dest_url: str
+
+    :return data_dest_err: bool
+    """
+    data_dest_err = False
+
+    data_orig_name = os.path.basename(data_orig_url)
+
+    if os.path.isfile(path=data_orig_url):
+        try:
+            copyfile(
+                data_orig_url,
+                data_dest_url
+            )
+
+            log = 'File {0} successfully copied to destination folder.'.\
+                format(data_orig_name)
+            logger.info(msg=log)
+        except Exception as exc:
+            data_dest_err = True
+            log = 'Failed to copy file to destination folder {0}.'.format(data_orig_name)
+            logger.error(msg=log)
+            logger.error(msg=exc)
+            print(log)
+            print(exc)
+
+    else:
+        data_dest_err = True
+        log = 'Failed to locate file {0} to copy.'.\
+            format(data_orig_name)
+        logger.error(msg=log)
+        print(log)
+
+    return data_dest_err

@@ -7,7 +7,7 @@ import math
 import os.path
 from PIL import Image, ImageFont, ImageDraw
 
-logfile = 'januswm'
+logfile = 'janusdata'
 logger = logging.getLogger(logfile)
 
 
@@ -160,7 +160,7 @@ def find_angles(
 
     except Exception as exc:
         img_ang_err = True
-        log = 'OpenCV failed to determine angles.'
+        log = 'Failed to determine object angles.'
         logger.error(msg=log)
         logger.error(msg=exc)
         print(log)
@@ -171,7 +171,7 @@ def find_angles(
 
 def rotate(
         img_orig,
-        img_save: bool,
+        img_save_dict: dict,
         img_grotd_url: str,
         img_frotd_url: str,
         img_orig_shape: str,
@@ -182,7 +182,7 @@ def rotate(
     performs fine rotation based on top edge of digit window
 
     :param img_orig: opencv image
-    :param img_save: bool
+    :param img_save_dict: dict
     :param img_grotd_url: str
     :param img_frotd_url: str
     :param img_orig_shape: str
@@ -215,7 +215,7 @@ def rotate(
                 img_orig_shape[0]
             )
         )
-        if img_save:
+        if img_save_dict['grotd']:
             cv2.imwrite(
                 filename=img_grotd_url,
                 img=img_grotd,
@@ -363,7 +363,7 @@ def rotate(
                 img_rect.shape[0]
             )
         )
-        if img_save:
+        if img_save_dict['frotd']:
             cv2.imwrite(
                 filename=img_frotd_url,
                 img=img_frotd,
@@ -391,7 +391,7 @@ def rotate(
 
 def crop_rect(
         img_rotd,
-        img_save: bool,
+        img_save_dict: dict,
         img_rect_url: str,
         img_digw_url: str
 ) -> tuple:
@@ -399,7 +399,7 @@ def crop_rect(
     Crops digit window to digit window edges
 
     :param img_rotd: opencv image
-    :param img_save: bool
+    :param img_save_dict: dict
     :param img_rect_url: str
     :param img_digw_url: str
 
@@ -496,7 +496,7 @@ def crop_rect(
         logger.info(msg=log)
         print(log)
 
-        if img_save:
+        if img_save_dict['rect']:
             cv2.line(
                 img=img_rotd,
                 pt1=(0, (uly - 1)),
@@ -535,6 +535,7 @@ def crop_rect(
                 ]
             )
 
+        if img_save_dict['digw']:
             cv2.imwrite(
                 filename=img_digw_url,
                 img=img_digw,
@@ -563,19 +564,19 @@ def crop_rect(
 
 def crop_digits(
         img_digw,
-        img_save: bool,
+        img_save_dict: dict,
         img_inv_url: str,
-        img_path: str,
-        img_dirs_dict: dict
+        device_path: str,
+        data_dirs_dict: dict
 ) -> (bool, list):
     """
     Crops and saves given image as separate digits
 
     :param img_digw: opencv image
-    :param img_save: bool
+    :param img_save_dict: dict
     :param img_inv_url: str
-    :param img_path: str
-    :param img_dirs_dict: dict
+    :param device_path: str
+    :param data_dirs_dict: dict
 
     :return img_digs_err: bool
     :return img_digs: list
@@ -613,7 +614,7 @@ def crop_digits(
             threshold2=200
         )
 
-        if img_save:
+        if img_save_dict['inv']:
             cv2.imwrite(
                 filename=img_inv_url,
                 img=img_thresh,
@@ -702,7 +703,7 @@ def crop_digits(
             logger.info(msg=log)
             print(log)
 
-            if img_save:
+            if img_save_dict['cont']:
                 # Need to make copy of image in memory to prevent
                 # OpenCV operations from changing original image
                 img_dig_orig = img_digw[
@@ -769,8 +770,8 @@ def crop_digits(
                 )
 
                 img_cont_url = os.path.join(
-                    img_path,
-                    img_dirs_dict['cont'],
+                    device_path,
+                    data_dirs_dict['cont'],
                     'cont' + '_d' + str(digit) + os.path.basename(img_inv_url)[3::]
                 )
                 cv2.imwrite(
@@ -782,9 +783,10 @@ def crop_digits(
                     ]
                 )
 
+            if img_save_dict['digs']:
                 img_dig_url = os.path.join(
-                    img_path,
-                    img_dirs_dict['digs'],
+                    device_path,
+                    data_dirs_dict['digs'],
                     'digs' + '_d' + str(digit) + os.path.basename(img_inv_url)[3::]
                 )
 
@@ -909,14 +911,14 @@ def overlay(
         )
         img_olay.close()
 
-        log = 'PIL successfully overlaid image {0}.'. \
+        log = 'Successfully overlaid image {0}.'. \
             format(img_olay_url)
         logger.info(msg=log)
         print(log)
 
     except Exception as exc:
         img_olay_err = True
-        log = 'PIL failed to overlay image {0}.'. \
+        log = 'Failed to overlay image {0}.'. \
             format(img_olay_url)
         logger.error(msg=log)
         logger.error(msg=exc)

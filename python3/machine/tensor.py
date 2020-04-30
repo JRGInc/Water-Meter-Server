@@ -24,7 +24,7 @@ class Tensor:
 
         :param core_cfg
         """
-        logfile = 'januswm'
+        logfile = 'janusdata'
         self.logger = logging.getLogger(logfile)
 
         # Print version, clear session, and get GPUs
@@ -113,7 +113,7 @@ class Tensor:
 
         except Exception as exc:
             build_err = True
-            log = 'Failed to build YOLO model.'
+            log = 'Failed to build YOLO v3 model.'
             self.logger.error(msg=log)
             self.logger.error(msg=exc)
             print(log)
@@ -145,7 +145,7 @@ class Tensor:
 
         except Exception as exc:
             build_err = True
-            log = 'Failed to detect objects from image data.'
+            log = 'Failed to build Inception v4 model.'
             self.logger.error(msg=log)
             self.logger.error(msg=exc)
             print(log)
@@ -455,7 +455,7 @@ class Tensor:
             model,
             img_orig,
             img_orig_shape,
-            img_save: bool,
+            img_save_dict: dict,
             img_bbox_url: str,
             classes
     ) -> (bool, dict):
@@ -465,7 +465,7 @@ class Tensor:
         :param model
         :param img_orig
         :param img_orig_shape
-        :param img_save
+        :param img_save_dict
         :param img_bbox_url
         :param classes
 
@@ -510,24 +510,22 @@ class Tensor:
                 img_shape=img_orig_shape[0:2]
             )
 
-            # Draw and save YOLO boundary box image
-            if self.yolo_dict['rslts'] is not None:
-                draw_bbox_err, img_bbox = self.draw_bbox_yolo(
-                    img_orig=img_orig.copy(),
-                    img_orig_shape=img_orig_shape,
-                    bboxes=best_bboxes,
-                    classes=classes
-                )
+            draw_bbox_err, img_bbox = self.draw_bbox_yolo(
+                img_orig=img_orig.copy(),
+                img_orig_shape=img_orig_shape,
+                bboxes=best_bboxes,
+                classes=classes
+            )
 
-                if img_save:
-                    cv2.imwrite(
-                        filename=img_bbox_url,
-                        img=img_bbox
-                    )
+            if img_save_dict['bbox']:
+                cv2.imwrite(
+                    filename=img_bbox_url,
+                    img=img_bbox
+                )
 
             # Sort the boundary boxes
             for bbox in best_bboxes:
-                coor = np.array(
+                coords = np.array(
                     bbox[:4],
                     dtype=np.int32
                 )
@@ -537,7 +535,7 @@ class Tensor:
                 score = '%.4f' % score
                 xmin, ymin, xmax, ymax = list(map(
                     str,
-                    coor
+                    coords
                 ))
                 sorted_bbox[class_name] = [
                     float(score),
@@ -625,10 +623,13 @@ class Tensor:
         timea = ttime.time()
 
         pred_err = False
-        pred_list = [
+        pred_list_pri = [
             img_orig_dtg,
-            '',
-            'I'
+            ''
+        ]
+        pred_list_alt = [
+            img_orig_dtg,
+            ''
         ]
 
         try:
@@ -661,8 +662,8 @@ class Tensor:
 
                         # Test prediction against confidence threshold
                         if confidence < self.incept_dict['confidence']:
-                            pred_list[1] += 'R'
-                            pred_list[2] = 'I'
+                            pred_list_pri[1] += 'R'
+                            pred_list_alt[1] += str(prediction // 10**0 % 10)
 
                             log = 'Digit {0} prediction rejected due to low confidence.'. \
                                 format(digit)
@@ -673,14 +674,14 @@ class Tensor:
                             # Prediction falls into range of normal
                             # values, 0 through 9
                             if prediction < 10:
-                                pred_list[1] += str(prediction)
-                                pred_list[2] = 'V'
+                                pred_list_pri[1] += str(prediction)
+                                pred_list_alt[1] += str(prediction)
 
                             # Prediction falls into transition zones
                             # between values
                             elif (prediction >= 10) and (prediction < 20):
-                                pred_list[1] += 'T'
-                                pred_list[2] = 'I'
+                                pred_list_pri[1] += 'T'
+                                pred_list_alt[1] += str(prediction // 10 ** 0 % 10)
 
                                 log = 'Digit {0} falls on transition boundary.'.\
                                     format(digit)
@@ -689,32 +690,25 @@ class Tensor:
 
                             # Prediction shows occluded by meter needle
                             elif (prediction >= 20) and (prediction < 30):
-                                pred_list[1] += 'N'
-                                pred_list[2] = 'I'
+                                pred_list_pri[1] += 'N'
+                                pred_list_alt[1] += str(prediction // 10 ** 0 % 10)
 
                                 log = 'Digit {0} is occluded by the needle.'.\
                                     format(digit)
                                 self.logger.info(msg=log)
                                 print(log)
 
-                        pred_list.append(prediction)
-                        pred_list.append(confidence)
-
-                    if pred_list[2] == 'V':
-                        log = 'Prediction value has valid digits.'
-                        self.logger.info(msg=log)
-                        print(log)
-
-                    else:
-                        log = 'Prediction value has one or more invalid digits.'
-                        self.logger.info(msg=log)
-                        print(log)
+                        pred_list_pri.append(prediction)
+                        pred_list_pri.append(confidence)
+                        pred_list_alt.append(prediction)
+                        pred_list_alt.append(confidence)
 
                     log = 'Successfully predicted digit values from image data.'
                     self.logger.info(msg=log)
                     print(log)
 
-            print(pred_list)
+            print(pred_list_pri)
+            print(pred_list_alt)
 
         except Exception as exc:
             pred_err = True
@@ -726,21 +720,23 @@ class Tensor:
 
         # Build text with which to overlay image
         if not pred_err:
-            img_olay_text = '          Value: '
+            img_olay_text = '  Value: '
             for digit in range(5, -1, -1):
                 if digit > 0:
-                    img_olay_text += str(pred_list[1][5 - digit]) + '-'
+                    img_olay_text += str(pred_list_pri[1][5 - digit]) + '-'
                 else:
-                    img_olay_text += str(pred_list[1][5 - digit])
+                    img_olay_text += str(pred_list_pri[1][5 - digit])
 
-            if pred_list[2] == 'V':
-                img_olay_text += '     (valid)'
-            elif pred_list[2] == 'I':
-                img_olay_text += '     (invalid)'
+            img_olay_text += '  Posted: '
+            for digit in range(5, -1, -1):
+                if digit > 0:
+                    img_olay_text += str(pred_list_alt[1][5 - digit]) + '-'
+                else:
+                    img_olay_text += str(pred_list_alt[1][5 - digit])
 
         else:
-            img_olay_text = '           Value: Prediction Error'
+            img_olay_text = '      Value: Prediction Error'
 
         print('Total prediction time elapsed: {0} sec'.format(ttime.time() - timea))
 
-        return pred_err, pred_list, img_olay_text
+        return pred_err, pred_list_pri, pred_list_alt, img_olay_text
