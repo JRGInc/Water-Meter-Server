@@ -240,7 +240,17 @@ def rotate(
         # Vertical offset is used to ensure that left and right vertical
         # edges can be found when digit window is slightly angle.
         img_crop_dict = None
-        if img_orig_shape[0] == 1536:
+        if img_orig_shape[0] == 1000:
+            img_crop_dict = {
+                'ulx': img_ang_list[0] - 240,
+                'uly': img_ang_list[1] + 90,
+                'brx': img_ang_list[0] + 240,
+                'bry': img_ang_list[1] + 205
+            }
+            img_x_offset = 10
+            img_y_offset = 10
+
+        elif img_orig_shape[0] == 1536:
             img_crop_dict = {
                 'ulx': img_ang_list[0] - 240,
                 'uly': img_ang_list[1] + 90,
