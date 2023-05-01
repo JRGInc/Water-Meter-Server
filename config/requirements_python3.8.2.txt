@@ -1,4 +1,4 @@
-Flask==1.1.2
+Flask==2.3.2
 gast==0.2.2
 gevent==20.6.1
 influxdb==5.3.0
